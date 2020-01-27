@@ -1,0 +1,7 @@
+export { default as Test } from './Test'
+export { default as Login } from './Login'
+export { default as Registration } from './Registration'
+export { default as Profile } from './Profile'
+export { default as Player } from './Player'
+export { default as Playlist } from './Playlist'
+export { default as TopArtists } from './TopArtists'
