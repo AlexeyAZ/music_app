@@ -91,8 +91,7 @@ AppContent.defaultProps = {
 	children: null,
 }
 
-const mapStateToProps = ({ songs, playbackStatus, playbackInstance }) => ({
-	songs,
+const mapStateToProps = ({ playbackStatus, playbackInstance }) => ({
 	playbackStatus,
 	playbackInstance,
 })

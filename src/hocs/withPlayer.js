@@ -5,7 +5,6 @@ import { connect } from 'react-redux'
 import { bindActionCreators, compose } from 'redux'
 
 import * as PlaybackModule from 'modules/playback'
-import * as SongsModule from 'modules/songs'
 
 const withPlayer = WrappedComponent => {
 	class WithPlayerHOC extends Component {
@@ -13,10 +12,11 @@ const withPlayer = WrappedComponent => {
 			const {
 				playbackStatus: {
 					status: { isPlaying },
-					track: { id: playbackId },
+					meta: { id: playbackId },
 				},
 			} = this.props
 			const id = trackId || playbackId
+			console.log('handleTogglePlay', id)
 			if (!id) {
 				return null
 			}
@@ -42,40 +42,51 @@ const withPlayer = WrappedComponent => {
 				playbackInstance: { instance },
 			} = this.props
 			try {
-				await updatePlaybackStatus({ status: { isLoaded: false }, track: { id } })
+				await updatePlaybackStatus({ status: { isLoaded: false }, meta: { id } })
 
 				const source = { uri }
 				const initialStatus = this.getInitialPlayStatus(customInitialStatus)
 
 				await instance.unloadAsync()
 
-				instance.setOnPlaybackStatusUpdate(this.handlePlaybackStatusUpdate)
+				// instance.setOnPlaybackStatusUpdate(this.handlePlaybackStatusUpdate)
 
-				await instance.loadAsync(source, initialStatus)
+				const status = await instance.loadAsync(source, initialStatus)
+				await updatePlaybackStatus({ status, meta: { id } })
 			} catch (error) {
 				console.log(`withPlayer -> handlePlay: ${error}`)
 			}
 		}
 
-		handlePause = () => {
+		handlePause = async () => {
 			const {
+				updatePlaybackStatus,
 				playbackInstance: { instance },
 			} = this.props
-			if (instance) return instance.pauseAsync()
+			if (instance) {
+				const status = await instance.pauseAsync()
+				await updatePlaybackStatus({ status })
+				return status
+			}
 		}
 
-		handleContinuePlay = () => {
+		handleContinuePlay = async () => {
 			const {
+				updatePlaybackStatus,
 				playbackInstance: { instance },
 			} = this.props
-			return instance.playAsync()
+			if (instance) {
+				const status = await instance.playAsync()
+				await updatePlaybackStatus({ status })
+				return status
+			}
 		}
 
 		handlePlaybackStatusUpdate = status => {
 			const {
 				updatePlaybackStatus,
 				playbackStatus: {
-					track: { id },
+					meta: { id },
 				},
 			} = this.props
 			if (!status.error) {
@@ -94,7 +105,7 @@ const withPlayer = WrappedComponent => {
 						shouldCorrectPitch: status.shouldCorrectPitch,
 						progressUpdateIntervalMillis: status.progressUpdateIntervalMillis,
 					},
-					track: {
+					meta: {
 						id,
 					},
 				})
@@ -104,18 +115,34 @@ const withPlayer = WrappedComponent => {
 			}
 		}
 
+		handleToggleMute = async () => {
+			const {
+				updatePlaybackStatus,
+				playbackStatus: {
+					status: { isMuted },
+				},
+				playbackInstance: { instance },
+			} = this.props
+			if (instance) {
+				const status = await instance.setIsMutedAsync(!isMuted)
+				await updatePlaybackStatus({ status })
+				return status
+			}
+		}
+
 		createPlaybackInstance = () => {
 			const { updatePlaybackInstance } = this.props
 			const playbackInstance = new Audio.Sound()
 			return updatePlaybackInstance(playbackInstance)
 		}
 
-		getTrackPosition = () => {
+		getTrackPosition = async () => {
 			const {
-				playbackStatus: {
-					status: { positionMillis, durationMillis },
-				},
+				playbackInstance: { instance },
 			} = this.props
+			const status = await instance.getStatusAsync()
+
+			const { positionMillis, durationMillis } = status
 			if (positionMillis && durationMillis) {
 				return positionMillis / durationMillis
 			}
@@ -125,7 +152,7 @@ const withPlayer = WrappedComponent => {
 		getNextTrackIndex = tracks => {
 			const {
 				playbackStatus: {
-					track: { id: playbackId },
+					meta: { id: playbackId },
 				},
 			} = this.props
 			const tracksCount = tracks.length
@@ -139,7 +166,7 @@ const withPlayer = WrappedComponent => {
 		getPreviousTrackIndex = tracks => {
 			const {
 				playbackStatus: {
-					track: { id: playbackId },
+					meta: { id: playbackId },
 				},
 			} = this.props
 			const tracksCount = tracks.length
@@ -168,21 +195,26 @@ const withPlayer = WrappedComponent => {
 			return initialStatus
 		}
 
-		setPlaybackPosition = position => {
+		setPlaybackPosition = async position => {
 			const {
+				updatePlaybackStatus,
 				playbackStatus: {
 					status: { durationMillis },
 				},
 				playbackInstance: { instance },
 			} = this.props
-			const millis = durationMillis * position
-			return instance.setPositionAsync(millis)
+			if (instance) {
+				const millis = durationMillis * position
+				const status = await instance.setPositionAsync(millis)
+				await updatePlaybackStatus({ status })
+				return status
+			}
 		}
 
 		isTrackActive = id => {
 			const {
 				playbackStatus: {
-					track: { id: playbackId },
+					meta: { id: playbackId },
 				},
 			} = this.props
 			return id === playbackId
@@ -197,6 +229,15 @@ const withPlayer = WrappedComponent => {
 			return isMuted
 		}
 
+		isPlayerPlayng = () => {
+			const {
+				playbackStatus: {
+					status: { isPlaying },
+				},
+			} = this.props
+			return isPlaying
+		}
+
 		render() {
 			return (
 				<WrappedComponent
@@ -204,13 +245,14 @@ const withPlayer = WrappedComponent => {
 					onContinuePlay={this.handleContinuePlay}
 					onTogglePlay={this.handleTogglePlay}
 					onPause={this.handlePause}
-					onPlaybackStatusUpdate={this.handlePlaybackStatusUpdate}
+					onToggleMute={this.handleToggleMute}
 					createPlaybackInstance={this.createPlaybackInstance}
 					getTrackPosition={this.getTrackPosition}
 					getNextTrackIndex={this.getNextTrackIndex}
 					getPreviousTrackIndex={this.getPreviousTrackIndex}
 					setPlaybackPosition={this.setPlaybackPosition}
 					isPlayerMuted={this.isPlayerMuted}
+					isPlayerPlayng={this.isPlayerPlayng}
 					{...this.props}
 				/>
 			)
@@ -224,8 +266,7 @@ const withPlayer = WrappedComponent => {
 		updatePlaybackStatus: PropTypes.func.isRequired,
 	}
 
-	const mapStateToProps = ({ songs, playbackStatus, playbackInstance }) => ({
-		songs,
+	const mapStateToProps = ({ playbackStatus, playbackInstance }) => ({
 		playbackStatus,
 		playbackInstance,
 	})
@@ -233,7 +274,6 @@ const withPlayer = WrappedComponent => {
 	const mapDispatchToProps = dispatch => ({
 		updatePlaybackInstance: bindActionCreators(PlaybackModule.updatePlaybackInstance, dispatch),
 		updatePlaybackStatus: bindActionCreators(PlaybackModule.updatePlaybackStatus, dispatch),
-		getSongs: bindActionCreators(SongsModule.getSongs, dispatch),
 	})
 
 	return compose(connect(mapStateToProps, mapDispatchToProps))(WithPlayerHOC)

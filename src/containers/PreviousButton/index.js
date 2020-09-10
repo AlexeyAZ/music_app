@@ -8,37 +8,33 @@ import { PlayerButton } from 'components'
 import { withPlayer } from 'hocs'
 
 import * as PlaybackModule from 'modules/playback'
-import * as SongsModule from 'modules/songs'
 
 class PreviousButton extends Component {
-	componentDidMount() {
-		const { getSongs } = this.props
-		getSongs()
-	}
-
 	handleButtonPress = () => {
 		const {
-			songs: { data },
+			activePlaylist: { tracks },
 			playbackStatus: {
 				status: { isPlaying },
 			},
 			onPlay,
 			getPreviousTrackIndex,
 		} = this.props
-		const nextTrackIndex = getPreviousTrackIndex(data)
+		const previousTrackIndex = getPreviousTrackIndex(tracks)
 		if (isPlaying) {
-			return onPlay(data[nextTrackIndex].uri, data[nextTrackIndex].id)
+			return onPlay(tracks[previousTrackIndex].uri, tracks[previousTrackIndex].id)
 		}
-		return onPlay(data[nextTrackIndex].uri, data[nextTrackIndex].id, { shouldPlay: false })
+		return onPlay(tracks[previousTrackIndex].uri, tracks[previousTrackIndex].id, {
+			shouldPlay: false,
+		})
 	}
 
 	render() {
-		const { style, size } = this.props
+		const { style, iconSize } = this.props
 		return (
 			<PlayerButton
 				iconName="fast-backward"
 				style={style}
-				size={size}
+				iconSize={iconSize}
 				onPress={this.handleButtonPress}
 			/>
 		)
@@ -48,29 +44,27 @@ class PreviousButton extends Component {
 PreviousButton.propTypes = {
 	uri: PropTypes.string,
 	id: PropTypes.string,
+	activePlaylist: PropTypes.object.isRequired,
 	style: PlayerButton.propTypes.style,
-	size: PlayerButton.propTypes.size,
+	iconSize: PlayerButton.propTypes.iconSize,
 	playbackStatus: PropTypes.object.isRequired,
-	songs: PropTypes.object.isRequired,
 	onPlay: PropTypes.func.isRequired,
-	getSongs: PropTypes.func.isRequired,
 	getPreviousTrackIndex: PropTypes.func.isRequired,
 }
 PreviousButton.defaultProps = {
 	uri: null,
 	id: null,
 	style: PlayerButton.defaultProps.style,
-	size: PlayerButton.defaultProps.size,
+	iconSize: PlayerButton.defaultProps.iconSize,
 }
 
-const mapStateToProps = ({ songs, playbackStatus }) => ({
-	songs,
+const mapStateToProps = ({ activePlaylist, playbackStatus }) => ({
+	activePlaylist,
 	playbackStatus,
 })
 
 const mapDispatchToProps = dispatch => ({
 	updatePlaybackStatus: bindActionCreators(PlaybackModule.updatePlaybackStatus, dispatch),
-	getSongs: bindActionCreators(SongsModule.getSongs, dispatch),
 })
 
 export default compose(connect(mapStateToProps, mapDispatchToProps), withPlayer)(PreviousButton)

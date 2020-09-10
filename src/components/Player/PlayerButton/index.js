@@ -17,17 +17,17 @@ const playerButtonSizes = {
 	xxl: 90,
 }
 
-const PlayerButton = ({ iconName, size, children, style, disabled, onPress }) => {
-	const buttonHeight = playerButtonSizes[size]
-	const buttonWidth = playerButtonSizes[size]
-	const iconSize = playerButtonSizes[size] - 10
+const PlayerButton = ({ iconName, iconStyle, iconColor, iconSize, children, style, disabled, onPress }) => {
+	const buttonHeight = playerButtonSizes[iconSize]
+	const buttonWidth = playerButtonSizes[iconSize]
+	const currentIconSize = playerButtonSizes[iconSize] - 10
 	return (
 		<TouchableOpacity
 			disabled={disabled}
 			style={[styles.wrap, { height: buttonHeight, width: buttonWidth }, style]}
 			onPress={onPress}
 		>
-			{iconName ? <FontAwesome5 name={iconName} size={iconSize} /> : children}
+			{iconName ? <FontAwesome5 color={iconColor} style={iconStyle} name={iconName} size={currentIconSize} /> : children}
 		</TouchableOpacity>
 	)
 }
@@ -35,7 +35,8 @@ const PlayerButton = ({ iconName, size, children, style, disabled, onPress }) =>
 PlayerButton.propTypes = {
 	disabled: PropTypes.bool,
 	iconName: PropTypes.string,
-	size: PropTypes.oneOf(Object.keys(playerButtonSizes)),
+	iconStyle: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
+	iconSize: PropTypes.oneOf(Object.keys(playerButtonSizes)),
 	style: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
 	children: PropTypes.any,
 	onPress: PropTypes.func,
@@ -43,7 +44,8 @@ PlayerButton.propTypes = {
 PlayerButton.defaultProps = {
 	disabled: false,
 	iconName: null,
-	size: 's',
+	iconStyle: {},
+	iconSize: 's',
 	style: {},
 	children: null,
 	onPress: noop,

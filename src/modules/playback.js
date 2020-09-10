@@ -1,3 +1,4 @@
+import { createSelector } from 'reselect'
 import { createAction, createReducer } from 'helpers'
 
 const playbackInstanceInitialState = {
@@ -19,19 +20,22 @@ const playbackStatusInitialState = {
 		volume: 1.0,
 		rate: 1.0,
 	},
-	track: {
+	meta: {
 		id: null,
 	},
 }
 
-const playbackInstancesQueueInitilaState = {
-	queue: [],
-}
+const playbackStatusSelector = state => state.playbackStatus
+
+export const playbackStatusWithoutPosition = createSelector(
+	[playbackStatusSelector],
+	playbackStatus => {
+		return playbackStatus
+	}
+)
 
 export const updatePlaybackInstance = createAction('UPDATE_PLAYBACK_INSTANCE')
 export const updatePlaybackStatus = createAction('UPDATE_PLAYBACK_STATUS')
-export const updatePlaybackInstancesQueue = createAction('UPDATE_PLAYBACK_INSTANCES_QUEUE')
-export const clearPlaybackInstancesQueue = createAction('CLEAR_PLAYBACK_INSTANCES_QUEUE')
 
 const playerModule = {
 	playbackInstance: createReducer(updatePlaybackInstance, {
@@ -49,27 +53,12 @@ const playerModule = {
 		initialState: playbackStatusInitialState,
 		customTypes: {
 			[updatePlaybackStatus.start]: (state, payload) => {
+				const status = payload.status || { ...state.status }
+				const meta = payload.meta || { ...state.meta }
 				return {
 					...state,
-					status: { ...payload.status },
-					track: { ...payload.track },
-				}
-			},
-		},
-	}),
-	playbackInstancesQueue: createReducer(updatePlaybackInstancesQueue, {
-		initialState: playbackInstancesQueueInitilaState,
-		customTypes: {
-			[updatePlaybackInstancesQueue.start]: (state, payload) => {
-				return {
-					...state,
-					queue: [...state.queue, payload],
-				}
-			},
-			[clearPlaybackInstancesQueue.start]: state => {
-				return {
-					...state,
-					queue: [],
+					status,
+					meta,
 				}
 			},
 		},

@@ -3,15 +3,19 @@ import { combineReducers } from 'redux'
 import modalModule from './modal'
 import authModule from './auth'
 import playbackModule from './playback'
-import songsModule from './songs'
 import genresModule from './genres'
+import artistsModule from './artists'
+import playlistsModule from './playlists'
+import favoritesModule from './favorites'
 
 const rootReducer = combineReducers({
 	...modalModule,
 	...authModule,
 	...playbackModule,
-	...songsModule,
 	...genresModule,
+	...artistsModule,
+	...playlistsModule,
+	...favoritesModule,
 })
 
 export default rootReducer

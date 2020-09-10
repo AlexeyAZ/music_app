@@ -8,7 +8,7 @@ import { createDrawerNavigator } from 'react-navigation-drawer'
 import { store } from 'store'
 import { AppContent } from 'containers'
 import { Drawer } from 'components'
-import { Test, Login, Registration, Profile, Player, Playlist, TopArtists } from 'screens'
+import { Test, Login, Registration, Profile, Player, Playlist, TopArtists, Genres } from 'screens'
 import { navigationDefault } from 'navigation'
 
 const AuthNavigator = createStackNavigator(
@@ -29,9 +29,10 @@ const AppNavigator = createStackNavigator(
 		Player,
 		Playlist,
 		TopArtists,
+		Genres,
 	},
 	{
-		initialRouteName: 'Test',
+		initialRouteName: 'Genres',
 		defaultNavigationOptions: navigationDefault(),
 	}
 )

@@ -8,15 +8,40 @@ import { PlayerButton } from 'components'
 import { withPlayer } from 'hocs'
 
 import * as PlaybackModule from 'modules/playback'
-import * as SongsModule from 'modules/songs'
 
 class PlayButton extends Component {
+	// shouldComponentUpdate(nextProps) {
+	// 	const {
+	// 		id: idNext,
+	// 		playbackStatus: {
+	// 			status: { isPlaying: isPlayingNext, isLoaded: isLoadedNext },
+	// 			meta: { id: playbackIdNext },
+	// 		},
+	// 	} = nextProps
+	// 	const {
+	// 		id,
+	// 		playbackStatus: {
+	// 			status: { isPlaying, isLoaded },
+	// 			meta: { id: playbackId },
+	// 		},
+	// 	} = this.props
+	// 	if (
+	// 		id !== idNext ||
+	// 		isPlaying !== isPlayingNext ||
+	// 		isLoaded !== isLoadedNext ||
+	// 		playbackId !== playbackIdNext
+	// 	) {
+	// 		return true
+	// 	}
+	// 	return false
+	// }
+
 	getButtonIcon = () => {
 		const {
 			id,
 			playbackStatus: {
 				status: { isPlaying, isLoaded },
-				track: { id: playbackId },
+				meta: { id: playbackId },
 			},
 		} = this.props
 		if (!id) {
@@ -31,14 +56,21 @@ class PlayButton extends Component {
 		return 'play'
 	}
 
+	handleButtonPress = () => {
+		const { uri, id, onTogglePlay } = this.props
+		console.log('id', id)
+		onTogglePlay(uri, id)
+	}
+
 	render() {
-		const { style, size, uri, id, onPlay, onTogglePlay } = this.props
+		console.log('render PlayButton')
+		const { style, iconSize } = this.props
 		return (
 			<PlayerButton
 				iconName={this.getButtonIcon()}
 				style={style}
-				size={size}
-				onPress={() => onTogglePlay(uri, id)}
+				iconSize={iconSize}
+				onPress={this.handleButtonPress}
 			/>
 		)
 	}
@@ -48,20 +80,18 @@ PlayButton.propTypes = {
 	uri: PropTypes.string,
 	id: PropTypes.string,
 	style: PlayerButton.propTypes.style,
-	size: PlayerButton.propTypes.size,
+	iconSize: PlayerButton.propTypes.iconSize,
 	onTogglePlay: PropTypes.func.isRequired,
-	onPlay: PropTypes.func.isRequired,
 	playbackStatus: PropTypes.object.isRequired,
 }
 PlayButton.defaultProps = {
 	uri: null,
 	id: null,
 	style: PlayerButton.defaultProps.style,
-	size: PlayerButton.defaultProps.size,
+	iconSize: PlayerButton.defaultProps.iconSize,
 }
 
-const mapStateToProps = ({ songs, playbackStatus, playbackInstance }) => ({
-	songs,
+const mapStateToProps = ({ playbackStatus, playbackInstance }) => ({
 	playbackStatus,
 	playbackInstance,
 })
@@ -69,7 +99,6 @@ const mapStateToProps = ({ songs, playbackStatus, playbackInstance }) => ({
 const mapDispatchToProps = dispatch => ({
 	updatePlaybackStatus: bindActionCreators(PlaybackModule.updatePlaybackStatus, dispatch),
 	updatePlaybackInstance: bindActionCreators(PlaybackModule.updatePlaybackInstance, dispatch),
-	getSongs: bindActionCreators(SongsModule.getSongs, dispatch),
 })
 
 export default compose(connect(mapStateToProps, mapDispatchToProps), withPlayer)(PlayButton)

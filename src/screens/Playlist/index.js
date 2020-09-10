@@ -1,7 +1,6 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import { View, FlatList } from 'react-native'
-import { Audio } from 'expo-av'
 import { connect } from 'react-redux'
 import { bindActionCreators, compose } from 'redux'
 import { withNavigation } from 'react-navigation'
@@ -9,50 +8,28 @@ import moment from 'moment'
 import momentDurationFormatSetup from 'moment-duration-format'
 import get from 'lodash/get'
 
-import * as SongsModule from 'modules/songs'
+import * as PlaylistsModule from 'modules/playlists'
+import * as ArtistsModule from 'modules/artists'
+import * as FavoritesModule from 'modules/favorites'
 
 import { withPlayer } from 'hocs'
-import { MainText, TouchableOpacity, Container } from 'components'
+import { MainText, TouchableOpacity, Container, FavoriteButton } from 'components'
 import { PlayButton, CurrentTrackWidget } from 'containers'
 
 import styles from './styles'
 
-// const moment = momentDurationFormatSetup(momentLib)
-
 class Playlist extends Component {
-	state = {
-		durations: [],
-	}
+	async componentDidMount() {
+		const { navigation, getTopArtistTracks, setActivePlaylist } = this.props
+		const artistId = get(navigation, 'state.params.artistId')
+		const topArtistTracksResponse = await getTopArtistTracks({ data: artistId })
+		const topTracks = get(topArtistTracksResponse, 'data.tracks', [])
 
-	componentDidMount() {
-		const { getSongs } = this.props
-		getSongs()
-	}
+		await setActivePlaylist({
+			tracks: topTracks,
+		})
 
-	// componentDidUpdate(prevProps, prevState) {
-	// 	const {
-	// 		songs: { data },
-	// 	} = this.props
-	// 	const {
-	// 		songs: { data: prevData },
-	// 	} = prevProps
-	// 	if (data.length > 0 && data.length !== prevData.length) {
-	// 		const dataPromise = data.map(item => this.getAudioDuration(item.uri))
-	// 		Promise.all(dataPromise)
-	// 			.then(res => {
-	// 				const durations = res.map(({ status: { uri, durationMillis } }) => ({
-	// 					uri,
-	// 					duration: moment.duration(durationMillis, 'milliseconds').format('mm:ss'),
-	// 				}))
-	// 				this.setState({ durations })
-	// 			})
-	// 			.catch(err => console.log(err))
-	// 	}
-	// }
-
-	getAudioDuration = async uri => {
-		const playbackObject = await Audio.Sound.createAsync({ uri }, { shouldPlay: false })
-		return playbackObject
+		this.checkTracksFavorites(topTracks.map(track => track.id))
 	}
 
 	openPlayer = async (uri, id) => {
@@ -60,7 +37,7 @@ class Playlist extends Component {
 			onPlay,
 			navigation,
 			playbackStatus: {
-				track: { id: playbackId },
+				meta: { id: playbackId },
 			},
 		} = this.props
 		if (id === playbackId) {
@@ -71,46 +48,129 @@ class Playlist extends Component {
 		}
 	}
 
-	renderListItem = ({ item: { name, uri, id } }) => {
+	handleFavoriteButtonPress = (id, isFavorite) => {
+		if (isFavorite) {
+			return this.removeTrackFromFavorites(id)
+		}
+		return this.addTrackToFavorites(id)
+	}
+
+	checkTracksFavorites = async idsArray => {
+		const { getFavoriteStatus, addToActiveFavorites } = this.props
+		const favoritesTracksResponse = await getFavoriteStatus({
+			data: idsArray,
+		})
+		const favoritesTracks = get(favoritesTracksResponse, 'data.status', [])
+		await addToActiveFavorites({
+			data: favoritesTracks.filter(track => track.favorite === true).map(track => track.id),
+		})
+	}
+
+	addTrackToFavorites = async id => {
+		const { addToFavoritesRequest, addToActiveFavorites } = this.props
+		const addTrackToFavoritResponse = await addToFavoritesRequest({
+			reqData: { favorites: [{ id }] },
+		})
+
+		const newFavorites = get(addTrackToFavoritResponse, 'data.favorites')
+
+		await addToActiveFavorites({
+			data: newFavorites.filter(track => track.acknowledged === true).map(track => track.id),
+		})
+	}
+
+	removeTrackFromFavorites = async id => {
+		const { removeFromFavoritesRequest, removeFromActiveFavorites } = this.props
+		const removeFromFavoritesResponse = await removeFromFavoritesRequest({
+			data: id,
+		})
+
+		const newFavorites = get(removeFromFavoritesResponse, 'data.favorites')
+
+		await removeFromActiveFavorites({
+			data: newFavorites.filter(track => track.acknowledged === true).map(track => track.id),
+		})
+	}
+
+	renderListItem = ({ item: { name, previewURL, id } }) => {
+		const {
+			activeFavorites: { data: activeFavoritesData },
+		} = this.props
+
+		const isFavorite = activeFavoritesData.includes(id)
+
 		return (
 			<View style={styles.listRow}>
-				<PlayButton style={styles.listPlayIcon} size="xs" id={id} uri={uri} />
-				<TouchableOpacity style={styles.listContent} onPress={() => this.openPlayer(uri, id)}>
+				<PlayButton style={styles.listPlayIcon} iconSize="xs" id={id} uri={previewURL} />
+				<TouchableOpacity style={styles.listContent} onPress={() => this.openPlayer(previewURL, id)}>
 					<MainText numberOfLines={1}>{name}</MainText>
 				</TouchableOpacity>
-				<MainText style={{marginLeft: 'auto'}}>{id}</MainText>
+				<FavoriteButton
+					iconSize="xs"
+					active={isFavorite}
+					onPress={() => this.handleFavoriteButtonPress(id, isFavorite)}
+				/>
 			</View>
 		)
 	}
 
 	render() {
+		console.log('render Playlist')
 		const {
-			songs: { data },
+			topArtistTracks: { loading },
+			activePlaylist: { tracks },
 		} = this.props
 		return (
 			<Container>
-				<FlatList data={data} renderItem={this.renderListItem} keyExtractor={item => item.id} />
-				<CurrentTrackWidget />
+				{loading ? (
+					<MainText>Loading...</MainText>
+				) : (
+					<>
+						<FlatList data={tracks} renderItem={this.renderListItem} keyExtractor={item => item.id} />
+						<CurrentTrackWidget />
+					</>
+				)}
 			</Container>
 		)
 	}
 }
 
 Playlist.propTypes = {
+	activeFavorites: PropTypes.object.isRequired,
 	navigation: PropTypes.object.isRequired,
-	songs: PropTypes.object.isRequired,
+	topArtistTracks: PropTypes.object.isRequired,
+	activePlaylist: PropTypes.object.isRequired,
 	playbackStatus: PropTypes.object.isRequired,
 	onPlay: PropTypes.func.isRequired,
-	getSongs: PropTypes.func.isRequired,
+	getTopArtistTracks: PropTypes.func.isRequired,
+	setActivePlaylist: PropTypes.func.isRequired,
+	getFavoriteStatus: PropTypes.func.isRequired,
+	addToActiveFavorites: PropTypes.func.isRequired,
+	removeFromFavoritesRequest: PropTypes.func.isRequired,
+	removeFromActiveFavorites: PropTypes.func.isRequired,
+	addToFavoritesRequest: PropTypes.func.isRequired,
 }
 
-const mapStateToProps = ({ songs, playbackStatus }) => ({
-	songs,
-	playbackStatus,
+const mapStateToProps = ({
+	topArtistTracks,
+	activePlaylist,
+	myFavoriteStatus,
+	activeFavorites,
+}) => ({
+	myFavoriteStatus,
+	topArtistTracks,
+	activePlaylist,
+	activeFavorites,
 })
 
 const mapDispatchToProps = dispatch => ({
-	getSongs: bindActionCreators(SongsModule.getSongs, dispatch),
+	setActivePlaylist: bindActionCreators(PlaylistsModule.setActivePlaylist, dispatch),
+	getTopArtistTracks: bindActionCreators(ArtistsModule.getTopArtistTracks, dispatch),
+	getFavoriteStatus: bindActionCreators(FavoritesModule.getFavoriteStatus, dispatch),
+	addToFavoritesRequest: bindActionCreators(FavoritesModule.addToFavoritesRequest, dispatch),
+	removeFromFavoritesRequest: bindActionCreators(FavoritesModule.removeFromFavoritesRequest, dispatch),
+	addToActiveFavorites: bindActionCreators(FavoritesModule.addToActiveFavorites, dispatch),
+	removeFromActiveFavorites: bindActionCreators(FavoritesModule.removeFromActiveFavorites, dispatch),
 })
 
 export default compose(

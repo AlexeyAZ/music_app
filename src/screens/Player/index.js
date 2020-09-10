@@ -18,25 +18,25 @@ const playerNavigationButtonSize = 'xs'
 
 // eslint-disable-next-line react/prefer-stateless-function
 class Player extends Component {
-	shouldComponentUpdate(nextProps, nextState) {
-		const {
-			playbackStatus: {
-				status: { uri: nextUri },
-			},
-		} = nextProps
-		const {
-			playbackStatus: {
-				status: { uri },
-			},
-		} = this.props
-		if (nextUri !== uri) {
-			return true
-		}
-		return false
-	}
+	// shouldComponentUpdate(nextProps) {
+	// 	const {
+	// 		playbackStatus: {
+	// 			status: { uri: nextUri },
+	// 		},
+	// 	} = nextProps
+	// 	const {
+	// 		playbackStatus: {
+	// 			status: { uri },
+	// 		},
+	// 	} = this.props
+	// 	if (nextUri !== uri) {
+	// 		return true
+	// 	}
+	// 	return false
+	// }
 
 	render() {
-		console.log('render')
+		console.log('render Player')
 		const {
 			navigation,
 			playbackStatus: {
@@ -48,19 +48,19 @@ class Player extends Component {
 				<MainText align="center">{uri}</MainText>
 				<Spacer size={10} />
 				<View style={styles.tracksNavigation}>
-					<PreviousButton size={tracksNavigationButtonSize} />
-					<PlayButton style={styles.playButton} size={tracksNavigationButtonSize} />
-					<NextButton size={tracksNavigationButtonSize} />
+					<PreviousButton iconSize={tracksNavigationButtonSize} />
+					<PlayButton style={styles.playButton} iconSize={tracksNavigationButtonSize} />
+					<NextButton iconSize={tracksNavigationButtonSize} />
 				</View>
 				<Spacer size={10} />
 				<SeekBar />
 				<View style={styles.playerNavigation}>
 					<PlayerButton
 						iconName="list-ul"
-						size={playerNavigationButtonSize}
+						iconSize={playerNavigationButtonSize}
 						onPress={() => navigation.navigate('Playlist')}
 					/>
-					<MuteButton size={playerNavigationButtonSize} />
+					<MuteButton iconSize={playerNavigationButtonSize} />
 				</View>
 			</View>
 		)

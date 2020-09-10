@@ -23,6 +23,7 @@ module.exports = function(api) {
 						store: './src/store',
 						navigation: './src/navigation',
 						hocs: './src/hocs',
+						sagas: './src/sagas',
 					},
 				},
 			],

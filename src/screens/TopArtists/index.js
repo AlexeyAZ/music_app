@@ -7,6 +7,8 @@ import { bindActionCreators, compose } from 'redux'
 import get from 'lodash/get'
 
 import * as GenresModule from 'modules/genres'
+import * as PlaylistsModule from 'modules/playlists'
+import * as ArtistsModule from 'modules/artists'
 
 import { MainText, Container, TouchableOpacity } from 'components'
 
@@ -15,6 +17,11 @@ class TopArtists extends Component {
 		const { navigation, getTopArtistsByGenre } = this.props
 		const genre = get(navigation, 'state.params.genre')
 		if (genre) getTopArtistsByGenre({ data: genre })
+	}
+
+	handleArtistPress = async artistId => {
+		const { navigation } = this.props
+		navigation.navigate('Playlist', { artistId })
 	}
 
 	render() {
@@ -27,7 +34,11 @@ class TopArtists extends Component {
 					<MainText>Loading...</MainText>
 				) : (
 					topArtists.map(artist => {
-						return <MainText>{artist.name}</MainText>
+						return (
+							<TouchableOpacity key={artist.id} onPress={() => this.handleArtistPress(artist.id)}>
+								<MainText>{artist.name}</MainText>
+							</TouchableOpacity>
+						)
 					})
 				)}
 			</Container>
@@ -45,6 +56,8 @@ const mapStateToProps = ({ topArtistsByGenre }) => ({ topArtistsByGenre })
 
 const mapDispatchToProps = dispatch => ({
 	getTopArtistsByGenre: bindActionCreators(GenresModule.getTopArtistsByGenre, dispatch),
+	getTopArtistTracks: bindActionCreators(ArtistsModule.getTopArtistTracks, dispatch),
+	setActivePlaylist: bindActionCreators(PlaylistsModule.setActivePlaylist, dispatch),
 })
 
 export default compose(connect(mapStateToProps, mapDispatchToProps), withNavigation)(TopArtists)

@@ -9,19 +9,8 @@ import { withPlayer } from 'hocs'
 
 class MuteButton extends Component {
 	handleButtonPress = async () => {
-		const {
-			isPlayerMuted,
-			playbackInstance: { instance },
-		} = this.props
-		try {
-			if (isPlayerMuted()) {
-				await instance.setIsMutedAsync(false)
-			} else {
-				await instance.setIsMutedAsync(true)
-			}
-		} catch (error) {
-			console.log(`MuteButton -> handleButtonPress ${error}`)
-		}
+		const { onToggleMute } = this.props
+		onToggleMute()
 	}
 
 	getIconName = () => {
@@ -33,12 +22,12 @@ class MuteButton extends Component {
 	}
 
 	render() {
-		const { size, style } = this.props
+		const { iconSize, style } = this.props
 		return (
 			<PlayerButton
 				iconName={this.getIconName()}
 				onPress={this.handleButtonPress}
-				size={size}
+				iconSize={iconSize}
 				style={style}
 			/>
 		)
@@ -47,13 +36,13 @@ class MuteButton extends Component {
 
 MuteButton.propTypes = {
 	style: PlayerButton.propTypes.style,
-	size: PlayerButton.propTypes.size,
-	playbackInstance: PropTypes.object.isRequired,
+	iconSize: PlayerButton.propTypes.iconSize,
 	isPlayerMuted: PropTypes.func.isRequired,
+	onToggleMute: PropTypes.func.isRequired,
 }
 MuteButton.defaultProps = {
 	style: PlayerButton.defaultProps.style,
-	size: PlayerButton.defaultProps.size,
+	iconSize: PlayerButton.defaultProps.iconSize,
 }
 
 const mapStateToProps = ({ playbackInstance }) => ({

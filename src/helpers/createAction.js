@@ -28,8 +28,8 @@ const createAction = (type, prepareAction) => {
 	const { startType, successType, errorType } = actionTypes
 
 	const actionCreator = args => dispatch => {
-		const payload = get(args, 'data')
-		const prepared = typeof prepareAction === 'function' ? prepareAction(payload) : prepareAction
+		const data = get(args, 'data')
+		const prepared = typeof prepareAction === 'function' ? prepareAction(data) : prepareAction
 		dispatch({ type: startType, payload: args })
 
 		const url = get(prepared, 'url')
@@ -41,7 +41,8 @@ const createAction = (type, prepareAction) => {
 		const method = get(prepared, 'method', 'get')
 		const axiosOptions = get(prepared, 'axiosOptions', {})
 		const params = get(args, 'params', {})
-		const config = { method, url, params, ...axiosOptions }
+		const axiosData = get(args, 'reqData', {})
+		const config = { method, url, params, data: axiosData, ...axiosOptions }
 
 		return axiosInstance(config)
 			.then(response => {
@@ -49,6 +50,10 @@ const createAction = (type, prepareAction) => {
 				return response
 			})
 			.catch(error => {
+				const errorCode = get(error, 'response.data.code')
+				if (errorCode === 'UnauthorizedError') {
+					// TODO add error handling
+				}
 				dispatch({ type: errorType, payload: error })
 				return new Promise((resolve, reject) => reject(error))
 			})

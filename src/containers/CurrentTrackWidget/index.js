@@ -25,14 +25,14 @@ class CurrentTrackWidget extends Component {
 		return (
 			<View>
 				<View style={styles.wrap}>
-					<PreviousButton size={buttonSize} />
-					<PlayButton size={buttonSize} />
-					<NextButton size={buttonSize} />
-					<PlayerButton iconName="random" size={buttonSize} />
-					{/* <PlayerButton iconName="list-ul" size={buttonSize} />
-					<PlayerButton iconName="music" size={buttonSize} /> */}
-					<MuteButton size={buttonSize} />
-					<PlayerButton iconName="clone" size={buttonSize} onPress={this.handleOpenPlayer} />
+					<PreviousButton iconSize={buttonSize} />
+					<PlayButton iconSize={buttonSize} />
+					<NextButton iconSize={buttonSize} />
+					<PlayerButton iconName="random" iconSize={buttonSize} />
+					{/* <PlayerButton iconName="list-ul" iconSize={buttonSize} />
+					<PlayerButton iconName="music" iconSize={buttonSize} /> */}
+					<MuteButton iconSize={buttonSize} />
+					<PlayerButton iconName="clone" iconSize={buttonSize} onPress={this.handleOpenPlayer} />
 				</View>
 				<SeekBar />
 			</View>

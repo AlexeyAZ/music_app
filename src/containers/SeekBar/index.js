@@ -9,21 +9,86 @@ import { PlayerButton, SeekBar as SeekBarComponent } from 'components'
 import { withPlayer } from 'hocs'
 
 import * as PlaybackModule from 'modules/playback'
-import * as SongsModule from 'modules/songs'
 
 class SeekBar extends Component {
+	state = {
+		barValue: 0,
+	}
+
+	timerId = null
+	// shouldComponentUpdate(nextProps) {
+	// 	const {
+	// 		playbackStatus: {
+	// 			status: { positionMillis: nextPositionMillis, durationMillis: nextDurationMillis },
+	// 		},
+	// 	} = nextProps
+	// 	const {
+	// 		playbackStatus: {
+	// 			status: { positionMillis, durationMillis },
+	// 		},
+	// 	} = this.props
+	// 	if (positionMillis !== nextPositionMillis || durationMillis !== nextDurationMillis) {
+	// 		return true
+	// 	}
+	// 	return false
+	// }
+
+	componentDidMount() {
+		this.startBarAnimation()
+	}
+
+	// componentDidUpdate(prevProps) {
+	// 	const {
+	// 		playbackStatus: {
+	// 			status: { isPlaying: isPlayingPrev },
+	// 			meta: { id: prevId },
+	// 		},
+	// 	} = prevProps
+	// 	const {
+	// 		playbackStatus: {
+	// 			status: { isPlaying },
+	// 			meta: { id },
+	// 		},
+	// 	} = this.props
+	// 	if (isPlaying !== isPlayingPrev || prevId !== id) {
+	// 		if (this.timerId && isPlaying) {
+	// 			this.startBarAnimation()
+	// 		} else {
+	// 			this.stopBarAnimation()
+	// 		}
+	// 	}
+	// }
+
+	componentWillUnmount() {
+		this.stopBarAnimation()
+	}
+
+	startBarAnimation = () => {
+		const { getTrackPosition } = this.props
+		this.timerId = setInterval(async () => {
+			const barValue = await getTrackPosition()
+			this.setState({ barValue })
+		}, 500)
+	}
+
+	stopBarAnimation = () => {
+		if (this.timerId) {
+			clearTimeout(this.timerId)
+		}
+	}
+
 	handleSliderPress = ({ positionX }) => {
 		const { setPlaybackPosition } = this.props
 		setPlaybackPosition(positionX)
 	}
 
 	render() {
-		const { getTrackPosition } = this.props
+		const { barValue } = this.state
 		return (
 			<SeekBarComponent
 				maximumValue={1}
 				step={0.01}
-				value={getTrackPosition()}
+				value={barValue}
 				onPress={this.handleSliderPress}
 			/>
 		)
@@ -31,32 +96,17 @@ class SeekBar extends Component {
 }
 
 SeekBar.propTypes = {
-	uri: PropTypes.string,
-	id: PropTypes.string,
-	style: PlayerButton.propTypes.style,
-	size: PlayerButton.propTypes.size,
-	playbackStatus: PropTypes.object.isRequired,
-	songs: PropTypes.object.isRequired,
-	onPlay: PropTypes.func.isRequired,
-	getSongs: PropTypes.func.isRequired,
 	getTrackPosition: PropTypes.func.isRequired,
 	setPlaybackPosition: PropTypes.func.isRequired,
-}
-SeekBar.defaultProps = {
-	uri: null,
-	id: null,
-	style: PlayerButton.defaultProps.style,
-	size: PlayerButton.defaultProps.size,
+	playbackStatus: PropTypes.object.isRequired,
 }
 
-const mapStateToProps = ({ songs, playbackStatus }) => ({
-	songs,
+const mapStateToProps = ({ playbackStatus }) => ({
 	playbackStatus,
 })
 
 const mapDispatchToProps = dispatch => ({
 	updatePlaybackStatus: bindActionCreators(PlaybackModule.updatePlaybackStatus, dispatch),
-	getSongs: bindActionCreators(SongsModule.getSongs, dispatch),
 })
 
 export default compose(connect(mapStateToProps, mapDispatchToProps), withPlayer)(SeekBar)

@@ -32,7 +32,7 @@ import ScreenWrap from './ScreenWrap'
 import TextWithIcon from './TextWithIcon'
 import BorderView from './BorderView'
 import Tooltip from './Tooltip'
-import { PlayerButton, SeekBar } from './Player'
+import { PlayerButton, FavoriteButton, SeekBar } from './Player'
 
 export {
 	Heading,
@@ -71,5 +71,6 @@ export {
 	BorderView,
 	Tooltip,
 	PlayerButton,
+	FavoriteButton,
 	SeekBar,
 }
